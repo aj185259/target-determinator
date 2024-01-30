@@ -138,9 +138,9 @@ type Context struct {
 }
 
 // FullyProcess returns the before and after metadata maps, with fully filled caches.
-func FullyProcess(context *Context, revBefore LabelledGitRev, revAfter LabelledGitRev, targets TargetsList) (*QueryResults, *QueryResults, error) {
+func FullyProcess(context *Context, revBefore LabelledGitRev, revAfter LabelledGitRev, targets TargetsList, targetsSuffix string) (*QueryResults, *QueryResults, error) {
 	log.Printf("Processing %s", revBefore)
-	queryInfoBefore, err := fullyProcessRevision(context, revBefore, targets)
+	queryInfoBefore, err := fullyProcessRevision(context, revBefore, targets, targetsSuffix)
 	if err != nil {
 		if queryInfoBefore == nil {
 			return nil, nil, err
@@ -155,7 +155,7 @@ func FullyProcess(context *Context, revBefore LabelledGitRev, revAfter LabelledG
 
 	// At this point, we assume that the working directory is back to its pristine state.
 	log.Printf("Processing %s", revAfter)
-	queryInfoAfter, err := fullyProcessRevision(context, revAfter, targets)
+	queryInfoAfter, err := fullyProcessRevision(context, revAfter, targets, targetsSuffix)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -168,14 +168,14 @@ func FullyProcess(context *Context, revBefore LabelledGitRev, revAfter LabelledG
 // but that the user may want to use the results anyway, despite their query results being empty.
 // This may be useful when the "before" commit is broken for query, as it allows for running all
 // matching targets from the "after" query, despite the "before" being broken.
-func fullyProcessRevision(context *Context, rev LabelledGitRev, targets TargetsList) (queryInfo *QueryResults, err error) {
+func fullyProcessRevision(context *Context, rev LabelledGitRev, targets TargetsList, targetsSuffix string) (queryInfo *QueryResults, err error) {
 	defer func() {
 		innerErr := gitCheckout(context.WorkspacePath, context.OriginalRevision)
 		if innerErr != nil && err == nil {
 			err = fmt.Errorf("failed to check out original commit during cleanup: %v", innerErr)
 		}
 	}()
-	queryInfo, loadMetadataCleanup, err := LoadIncompleteMetadata(context, rev, targets)
+	queryInfo, loadMetadataCleanup, err := LoadIncompleteMetadata(context, rev, targets, targetsSuffix)
 	defer loadMetadataCleanup()
 	if err != nil {
 		return queryInfo, fmt.Errorf("failed to load metadata at %s: %w", rev, err)
@@ -199,7 +199,7 @@ func fullyProcessRevision(context *Context, rev LabelledGitRev, targets TargetsL
 // Note that a non-nil QueryResults may be returned even in the error case, which will have an
 // empty target-set, but may contain other useful information (e.g. the bazel release version).
 // Checking for nil-ness of the error is the true arbiter for whether the entire load was successful.
-func LoadIncompleteMetadata(context *Context, rev LabelledGitRev, targets TargetsList) (*QueryResults, func(), error) {
+func LoadIncompleteMetadata(context *Context, rev LabelledGitRev, targets TargetsList, targetsSuffix string) (*QueryResults, func(), error) {
 	// Create a temporary context to allow the workspace path to point to a git worktree if necessary.
 	context = &Context{
 		WorkspacePath:                          context.WorkspacePath,
@@ -239,7 +239,7 @@ func LoadIncompleteMetadata(context *Context, rev LabelledGitRev, targets Target
 	var queryInfoBeforeClear *QueryResults
 	if context.CompareQueriesAroundAnalysisCacheClear {
 		var err error
-		queryInfoBeforeClear, err = doQueryDeps(context, targets)
+		queryInfoBeforeClear, err = doQueryDeps(context, targets, targetsSuffix)
 		if err != nil {
 			return queryInfoBeforeClear, cleanupFunc, fmt.Errorf("failed to query[before] at %s in %v: %w", rev, context.WorkspacePath, err)
 		}
@@ -251,7 +251,7 @@ func LoadIncompleteMetadata(context *Context, rev LabelledGitRev, targets Target
 		return nil, cleanupFunc, err
 	}
 
-	queryInfo, err := doQueryDeps(context, targets)
+	queryInfo, err := doQueryDeps(context, targets, targetsSuffix)
 	if err != nil {
 		return queryInfo, cleanupFunc, fmt.Errorf("failed to query at %s in %v: %w", rev, context.WorkspacePath, err)
 	}
@@ -645,7 +645,7 @@ func bazelInfo(workingDirectory string, bazelCmd BazelCmd, key string) (string, 
 // Note that a non-nil QueryResults may be returned even in the error case, which will have an
 // empty target-set, but may contain other useful information (e.g. the bazel release version).
 // Checking for nil-ness of the error is the true arbiter for whether the entire query was successful.
-func doQueryDeps(context *Context, targets TargetsList) (*QueryResults, error) {
+func doQueryDeps(context *Context, targets TargetsList, targetsSuffix string) (*QueryResults, error) {
 	bazelRelease, err := BazelRelease(context.WorkspacePath, context.BazelCmd)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve the bazel release: %w", err)
@@ -667,6 +667,9 @@ func doQueryDeps(context *Context, targets TargetsList) (*QueryResults, error) {
 	}
 
 	depsPattern := fmt.Sprintf("deps(%s)", targets.String())
+	if targetsSuffix != "" {
+		depsPattern = fmt.Sprintf("%s %s", depsPattern, targetsSuffix)
+	}
 	if len(incompatibleTargetsToFilter) > 0 {
 		depsPattern += " - " + strings.Join(sortedStringKeys(incompatibleTargetsToFilter), " - ")
 	}
@@ -690,6 +693,10 @@ func doQueryDeps(context *Context, targets TargetsList) (*QueryResults, error) {
 		return nil, fmt.Errorf("failed to parse cquery result: %w", err)
 	}
 
+	targetsPattern := targets.String()
+	if targetsSuffix != "" {
+		targetsPattern = fmt.Sprintf("%s %s", targetsPattern, targetsSuffix)
+	}
 	matchingTargetResults, err := runToCqueryResult(context, targets.String(), false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to run top-level cquery: %w", err)

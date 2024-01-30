@@ -31,6 +31,7 @@ type config struct {
 	Context        *pkg.Context
 	RevisionBefore pkg.LabelledGitRev
 	Targets        pkg.TargetsList
+	TargetsSuffix  string
 	Verbose        bool
 }
 
@@ -80,6 +81,7 @@ func main() {
 	if err := pkg.WalkAffectedTargets(config.Context,
 		config.RevisionBefore,
 		config.Targets,
+		config.TargetsSuffix,
 		config.Verbose,
 		callback); err != nil {
 		// Print something on stdout that will make bazel fail when passed as a target.
@@ -113,6 +115,7 @@ func resolveConfig(flags targetDeterminatorFlags) (*config, error) {
 		Context:        commonArgs.Context,
 		RevisionBefore: commonArgs.RevisionBefore,
 		Targets:        commonArgs.Targets,
+		TargetsSuffix:  commonArgs.TargetsSuffix,
 		Verbose:        flags.verbose,
 	}, nil
 }

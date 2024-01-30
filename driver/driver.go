@@ -34,6 +34,7 @@ type config struct {
 	Context        *pkg.Context
 	RevisionBefore pkg.LabelledGitRev
 	Targets        pkg.TargetsList
+	TargetsSuffix  string
 	// One of "run" or "skip".
 	ManualTestMode    string
 	TargetPatternFile string
@@ -79,6 +80,7 @@ func main() {
 	if err := pkg.WalkAffectedTargets(config.Context,
 		config.RevisionBefore,
 		config.Targets,
+		config.TargetsSuffix,
 		false,
 		callback); err != nil {
 		log.Fatal(err)
@@ -172,6 +174,7 @@ func resolveConfig(flags driverFlags) (*config, error) {
 		Context:           commonArgs.Context,
 		RevisionBefore:    commonArgs.RevisionBefore,
 		Targets:           commonArgs.Targets,
+		TargetsSuffix:     commonArgs.TargetsSuffix,
 		ManualTestMode:    flags.manualTestMode,
 		TargetPatternFile: flags.targetPatternFile,
 	}, nil

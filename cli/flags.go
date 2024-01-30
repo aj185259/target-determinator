@@ -77,6 +77,7 @@ type CommonFlags struct {
 	IgnoredFiles                           *IgnoreFileFlag
 	BeforeQueryErrorBehavior               *string
 	TargetsFlag                            *string
+	TargetsSuffixFlag                      *string
 	AnalysisCacheClearStrategy             *string
 	CompareQueriesAroundAnalysisCacheClear bool
 	FilterIncompatibleTargets              bool
@@ -99,6 +100,7 @@ func RegisterCommonFlags() *CommonFlags {
 		IgnoredFiles:                           &IgnoreFileFlag{},
 		BeforeQueryErrorBehavior:               StrPtr(),
 		TargetsFlag:                            StrPtr(),
+		TargetsSuffixFlag:                      StrPtr(),
 		AnalysisCacheClearStrategy:             StrPtr(),
 		CompareQueriesAroundAnalysisCacheClear: false,
 		FilterIncompatibleTargets:              true,
@@ -119,6 +121,8 @@ func RegisterCommonFlags() *CommonFlags {
 	flag.StringVar(commonFlags.BeforeQueryErrorBehavior, "before-query-error-behavior", "ignore-and-build-all", "How to behave if the 'before' revision query fails. Accepted values: fatal,ignore-and-build-all")
 	flag.StringVar(commonFlags.TargetsFlag, "targets", "//...",
 		"Targets to consider. Accepts any valid `bazel query` expression (see https://bazel.build/reference/query).")
+	flag.StringVar(commonFlags.TargetsSuffixFlag, "targets-suffix", "",
+		"Suffix for targets. Ex. '^ //... except attr(\"tags\", \"manual\", //...)' to exclude all targets with the manual tag attribute")
 	flag.StringVar(commonFlags.AnalysisCacheClearStrategy, "analysis-cache-clear-strategy", "skip", "Strategy for clearing the analysis cache. Accepted values: skip,shutdown,discard.")
 	flag.BoolVar(&commonFlags.CompareQueriesAroundAnalysisCacheClear, "compare-queries-around-analysis-cache-clear", false, "Whether to check for query result differences before and after analysis cache clears. This is a temporary flag for performing real-world analysis.")
 	flag.BoolVar(&commonFlags.FilterIncompatibleTargets, "filter-incompatible-targets", true, "Whether to filter out incompatible targets from the candidate set of affected targets.")
@@ -129,6 +133,7 @@ type CommonConfig struct {
 	Context        *pkg.Context
 	RevisionBefore pkg.LabelledGitRev
 	Targets        pkg.TargetsList
+	TargetsSuffix  string
 }
 
 // ValidateCommonFlags ensures that the argument follow the right format
@@ -221,6 +226,7 @@ func ResolveCommonConfig(commonFlags *CommonFlags, beforeRevStr string) (*Common
 		Context:        context,
 		RevisionBefore: beforeRev,
 		Targets:        targetsList,
+		TargetsSuffix:  *commonFlags.TargetsSuffixFlag,
 	}, nil
 }
 
