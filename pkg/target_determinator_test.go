@@ -97,3 +97,10 @@ func Test_ParseCanonicalLabel(t *testing.T) {
 		}
 	}
 }
+
+// func Test_TargetsSuffixFormat(t *testing.T) {
+// 	tests := []struct{
+
+// 	}
+// 	for _, tt := range
+// }

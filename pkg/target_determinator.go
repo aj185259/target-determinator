@@ -697,7 +697,8 @@ func doQueryDeps(context *Context, targets TargetsList, targetsSuffix string) (*
 	if targetsSuffix != "" {
 		targetsPattern = fmt.Sprintf("%s %s", targetsPattern, targetsSuffix)
 	}
-	matchingTargetResults, err := runToCqueryResult(context, targets.String(), false)
+	log.Println(targetsPattern)
+	matchingTargetResults, err := runToCqueryResult(context, targetsPattern, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to run top-level cquery: %w", err)
 	}

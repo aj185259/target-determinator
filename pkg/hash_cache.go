@@ -421,12 +421,12 @@ func hashTarget(thc *TargetHashCache, labelAndConfiguration LabelAndConfiguratio
 	label := labelAndConfiguration.Label
 	configurationMap, ok := thc.context[label]
 	if !ok {
-		return nil, fmt.Errorf("label %s not found in contxt: %w", label, labelNotFound)
+		return nil, fmt.Errorf("label %s not found in context: %w", label, labelNotFound)
 	}
 	configuration := labelAndConfiguration.Configuration
 	configuredTarget, ok := configurationMap[configuration]
 	if !ok {
-		return nil, fmt.Errorf("label %s configuration %s not found in contxt: %w", label, configuration, labelNotFound)
+		return nil, fmt.Errorf("label %s configuration %s not found in context: %w", label, configuration, labelNotFound)
 	}
 	target := configuredTarget.Target
 	switch target.GetType() {
