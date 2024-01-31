@@ -646,10 +646,14 @@ func bazelInfo(workingDirectory string, bazelCmd BazelCmd, key string) (string, 
 // empty target-set, but may contain other useful information (e.g. the bazel release version).
 // Checking for nil-ness of the error is the true arbiter for whether the entire query was successful.
 func doQueryDeps(context *Context, targets TargetsList, targetsSuffix string) (*QueryResults, error) {
-	log.Println("in query deps")
 	bazelRelease, err := BazelRelease(context.WorkspacePath, context.BazelCmd)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve the bazel release: %w", err)
+	}
+
+	targetsPattern := targets.String()
+	if targetsSuffix != "" {
+		targetsPattern = fmt.Sprintf("%s %s", targetsPattern, targetsSuffix)
 	}
 
 	// Work around https://github.com/bazelbuild/bazel/issues/21010
@@ -659,7 +663,7 @@ func doQueryDeps(context *Context, targets TargetsList, targetsSuffix string) (*
 		if !context.FilterIncompatibleTargets {
 			return nil, fmt.Errorf("requested not to filter incompatible targets, but bazel version %s has a bug requiring filtering incompatible targets - see https://github.com/bazelbuild/bazel/issues/21010", bazelRelease)
 		}
-		incompatibleTargetsToFilter, err = findCompatibleTargets(context, targets.String(), false)
+		incompatibleTargetsToFilter, err = findCompatibleTargets(context, targetsPattern, false)
 		if err != nil {
 			return nil, fmt.Errorf("failed to find incompatible targets: %w", err)
 		}
@@ -693,17 +697,6 @@ func doQueryDeps(context *Context, targets TargetsList, targetsSuffix string) (*
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse cquery result: %w", err)
 	}
-
-	targetsPattern := targets.String()
-	if targetsSuffix != "" {
-		targetsPattern = fmt.Sprintf("%s %s", targetsPattern, targetsSuffix)
-		log.Println("true")
-		log.Println(targetsPattern)
-	} else {
-		log.Println("not true")
-		log.Println(targetsPattern)
-	}
-	log.Println(targetsPattern)
 	matchingTargetResults, err := runToCqueryResult(context, targetsPattern, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to run top-level cquery: %w", err)
@@ -711,7 +704,7 @@ func doQueryDeps(context *Context, targets TargetsList, targetsSuffix string) (*
 
 	var compatibleTargets map[label.Label]bool
 	if context.FilterIncompatibleTargets {
-		if compatibleTargets, err = findCompatibleTargets(context, targets.String(), true); err != nil {
+		if compatibleTargets, err = findCompatibleTargets(context, targetsPattern, true); err != nil {
 			return nil, fmt.Errorf("failed to find compatible targets: %w", err)
 		}
 	}
