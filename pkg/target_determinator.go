@@ -646,6 +646,7 @@ func bazelInfo(workingDirectory string, bazelCmd BazelCmd, key string) (string, 
 // empty target-set, but may contain other useful information (e.g. the bazel release version).
 // Checking for nil-ness of the error is the true arbiter for whether the entire query was successful.
 func doQueryDeps(context *Context, targets TargetsList, targetsSuffix string) (*QueryResults, error) {
+	log.Println("in query deps")
 	bazelRelease, err := BazelRelease(context.WorkspacePath, context.BazelCmd)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve the bazel release: %w", err)
@@ -696,6 +697,11 @@ func doQueryDeps(context *Context, targets TargetsList, targetsSuffix string) (*
 	targetsPattern := targets.String()
 	if targetsSuffix != "" {
 		targetsPattern = fmt.Sprintf("%s %s", targetsPattern, targetsSuffix)
+		log.Println("true")
+		log.Println(targetsPattern)
+	} else {
+		log.Println("not true")
+		log.Println(targetsPattern)
 	}
 	log.Println(targetsPattern)
 	matchingTargetResults, err := runToCqueryResult(context, targetsPattern, false)

@@ -16,6 +16,8 @@ Where <before-revision> may be any commit revision - full commit hashes, short c
     	Files to ignore for git operations, relative to the working-directory. These files shan't affect the Bazel graph.
   -targets bazel query
       Targets to consider. Accepts any valid bazel query expression (see https://bazel.build/reference/query). (default "//...")
+  -targets-suffix bazel expr
+      A bazel expression that can be used in conjunction with targets to intersect, union, etc. results (see https://bazel.build/query/language#algebraic-set-operations). (default "")
   -verbose
     	Whether to explain (messily) why each target is getting run
   -working-directory string
@@ -41,6 +43,8 @@ Optional flags:
     	How to handle affected tests tagged manual. Possible values: run|skip (default "skip")
   -targets bazel query
       Targets to consider. Accepts any valid bazel query expression (see https://bazel.build/reference/query). (default "//...")
+  -targets-suffix bazel expr
+      A bazel expression that can be used in conjunction with targets to intersect, union, etc. results (see https://bazel.build/query/language#algebraic-set-operations). (default "")
   -working-directory string
     	Working directory to query (default ".")
 ```

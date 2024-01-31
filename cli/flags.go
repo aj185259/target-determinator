@@ -122,7 +122,7 @@ func RegisterCommonFlags() *CommonFlags {
 	flag.StringVar(commonFlags.TargetsFlag, "targets", "//...",
 		"Targets to consider. Accepts any valid `bazel query` expression (see https://bazel.build/reference/query).")
 	flag.StringVar(commonFlags.TargetsSuffixFlag, "targets-suffix", "",
-		"Suffix for targets. Ex. '^ //... except attr(\"tags\", \"manual\", //...)' to exclude all targets with the manual tag attribute")
+		"A bazel expression that can be used in conjunction with targets to intersect, union, etc. results (see https://bazel.build/query/language#algebraic-set-operations). (default \"\")")
 	flag.StringVar(commonFlags.AnalysisCacheClearStrategy, "analysis-cache-clear-strategy", "skip", "Strategy for clearing the analysis cache. Accepted values: skip,shutdown,discard.")
 	flag.BoolVar(&commonFlags.CompareQueriesAroundAnalysisCacheClear, "compare-queries-around-analysis-cache-clear", false, "Whether to check for query result differences before and after analysis cache clears. This is a temporary flag for performing real-world analysis.")
 	flag.BoolVar(&commonFlags.FilterIncompatibleTargets, "filter-incompatible-targets", true, "Whether to filter out incompatible targets from the candidate set of affected targets.")
